@@ -1,0 +1,53 @@
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.xz.mapper.DynamicMapper">
+
+    <resultMap id="dynamicMap" type="com.xz.entity.DynamicInfo">
+        <id property="id" column="id"/>
+        <result property="tdText" column="td_text"/>
+        <result property="tdImg" column="td_img"/>
+        <result property="likeNum" column="like_num"/>
+        <result property="tdUsername" column="td_username"/>
+        <result property="tdAvatar" column="td_avatar"/>
+        <result property="tdTime" column="td_time"/>
+
+        <collection property="commentList" ofType="com.xz.entity.Comment">
+            <result column="tc_id" property="tcId"/>
+            <result column="tc_uid" property="tcUid"/>
+            <result column="tc_text" property="tcText"/>
+            <result column="tc_username" property="tcUsername"/>
+            <result column="tc_avatar" property="tcAvatar"/>
+            <result column="tc_time" property="tcTime"/>
+        </collection>
+
+        <collection property="likeList" ofType="java.lang.String">
+            <result column="likeUid" property="likeUid"/>
+        </collection>
+
+    </resultMap>
+
+    <select id="getMyDynamic" resultMap="dynamicMap">
+        select td.id,td.create_time td_time,td.content_text td_text,td.content_img td_img,
+               tu.username td_username,tu.avatar td_avatar,tdl.uid likeUid,
+               tc.id tc_id,tc.uid tc_uid,tc.content_text tc_text,tc.create_time tc_time,tc.username tc_username,tc.avatar tc_avatar
+        from t_dynamic td join t_user tu on td.uid = tu.uid left join
+             (select tc.id,tc.uid,tc.did,tc.content_text,tc.create_time,tu.username,tu.avatar from t_comment tc join t_user tu on tc.uid = tu.uid) tc
+             on td.id=tc.did left join t_dynamic_like tdl on tdl.did=td.id where td.uid in
+              (
+                  select distinct tu.uid
+                  from t_user tu,(select * from t_friend where t_friend.uid = #{uid} or t_friend.to_uid=#{uid}) tf
+                  where (tu.uid=tf.uid or tu.uid=tf.to_uid)
+              )
+        order by td.create_time desc
+    </select>
+
+    <select id="getMyselfDynamic" resultMap="dynamicMap">
+        select td.id,td.create_time td_time,td.content_text td_text,td.content_img td_img,
+               tu.username td_username,tu.avatar td_avatar,tdl.uid likeUid,
+               tc.id tc_id,tc.uid tc_uid,tc.content_text tc_text,tc.create_time tc_time,tc.username tc_username,tc.avatar tc_avatar
+        from t_dynamic td join t_user tu on td.uid = tu.uid left join
+             (select tc.id,tc.uid,tc.did,tc.content_text,tc.create_time,tu.username,tu.avatar from t_comment tc join t_user tu on tc.uid = tu.uid) tc
+             on td.id=tc.did left join t_dynamic_like tdl on tdl.did=td.id where td.uid=#{uid}
+        order by td.create_time desc
+    </select>
+
+</mapper>
